@@ -7,8 +7,21 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	"github.com/tatsu22/grocery/database"
-	"github.com/tatsu22/grocery/model"
+	"github.com/tatsu22/grocery/handlers"
 )
+
+const (
+	dbContextKey = "__db"
+)
+
+func dbMiddleware(db database.Gorm) echo.MiddlewareFunc {
+	return func(next echo.HandlerFunc) echo.HandlerFunc {
+		return func(c echo.Context) error {
+			c.Set(dbContextKey, db)
+			return next(c)
+		}
+	}
+}
 
 func main() {
 	fmt.Println("vim-go")
@@ -24,36 +37,28 @@ func main() {
 		panic(err)
 	}
 
+	e.Use(dbMiddleware(db))
+
 	e.GET("/", func(c echo.Context) error {
 		return c.JSON(http.StatusOK, struct{ Status string }{Status: "OK"})
 	})
 
-	e.POST("/groceryitems", func(c echo.Context) error {
-		ctx := c.Request().Context()
-		item := new(model.GroceryItem)
+	// Grocery Items
+	e.POST("/groceryitems", handlers.PostGroceryItem)
+	e.GET("/groceryitems", handlers.GetGroceryItems)
 
-		if err := c.Bind(item); err != nil {
-			return err
-		}
+	// Grocery List
+	e.POST("/grocerylist/addItem", handlers.AddItemToList)
+	e.POST("/grocerylist/subtractItem", handlers.SubtractItemFromList)
+	e.DELETE("/grocerylist/deleteItem", handlers.DeleteItemFromList)
+	e.GET("/grocerylist", handlers.GetGroceryList)
+	e.POST("/grocerylist/addRecipe", handlers.AddRecipeItemsToList)
+	e.DELETE("/grocerylist", handlers.DeleteGroceryList)
 
-		insertedItem, err := db.InsertGroceryItem(ctx, *item)
-		if err != nil {
-			return err
-		}
-
-		return c.JSON(http.StatusCreated, insertedItem)
-	})
-
-	e.GET("/groceryitems", func(c echo.Context) error {
-		name := c.QueryParam("name")
-		ctx := c.Request().Context()
-		items, err := db.SearchGroceryItems(ctx, name)
-		if err != nil {
-			return err
-		}
-
-		return c.JSON(http.StatusOK, items)
-	})
+	// Recipes
+	e.POST("/recipes", handlers.PostRecipe)
+	e.GET("/recipes", handlers.GetRecipe)
+	e.DELETE("/recipes", handlers.DeleteRecipe)
 
 	e.Logger.Fatal(e.Start(":8080"))
 }
