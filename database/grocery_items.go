@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/tatsu22/grocery/model"
+	"gorm.io/gorm/clause"
 )
 
 func (db *Gorm) InsertGroceryItem(ctx context.Context, item model.GroceryItem) (model.GroceryItem, error) {
@@ -21,7 +22,7 @@ func (db *Gorm) UpdateGroceryItem(ctx context.Context, item model.GroceryItem) (
 func (db *Gorm) SearchGroceryItems(ctx context.Context, name string) ([]model.GroceryItem, error) {
 	var results []model.GroceryItem
 	tx := db.DB.WithContext(ctx)
-	result := tx.Where("name ILIKE ?", wrapString(name)).Find(&results)
+	result := tx.Where("name ILIKE ?", wrapString(name)).Order("name asc").Find(&results)
 
 	return results, result.Error
 }
@@ -43,4 +44,10 @@ func (db *Gorm) GetAllGroceryItems(ctx context.Context) ([]model.GroceryItem, er
 	result := tx.Find(&groceryItems)
 
 	return groceryItems, result.Error
+}
+
+func (db *Gorm) DeleteGroceryItem(ctx context.Context, item model.GroceryItem) (model.GroceryItem, error) {
+	tx := db.DB.WithContext(ctx)
+	result := tx.Clauses(clause.Returning{}).Delete(&item)
+	return item, result.Error
 }

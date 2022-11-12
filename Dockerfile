@@ -1,4 +1,4 @@
-FROM golang:1.16-alpine
+FROM golang:1.18-alpine
 
 # Set destination for COPY
 WORKDIR /app
@@ -13,8 +13,8 @@ RUN go mod download
 COPY . ./
 
 # Build
-# RUN env GOOS=linux GOARCH=arm GOARM=7 go build -o /countdown-api
-RUN go build -o /grocery-api
+RUN env GOOS=linux GOARCH=arm64 go build -o /grocery-api
+#RUN go build -o /grocery-api
 
 # This is for documentation purposes only.
 # To actually open the port, runtime parameters

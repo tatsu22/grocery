@@ -46,6 +46,7 @@ func main() {
 	// Grocery Items
 	e.POST("/groceryitems", handlers.PostGroceryItem)
 	e.GET("/groceryitems", handlers.GetGroceryItems)
+	e.DELETE("/groceryitems", handlers.DeleteGroceryItem)
 
 	// Grocery List
 	e.POST("/grocerylist/addItem", handlers.AddItemToList)
